@@ -13,8 +13,8 @@ byte ir_sensor [] = {
 const byte irSensorCount = 2;
 
 //setup product names array
-char* productNames [] = {
-  "lotion", "salve", "spot healer", "nail stick", "soap"
+char* productName [] = {
+  "soap", "salve", "lotion", "spot healer", "nail stick"
 };
 const byte productNamesCount = 5;
 
@@ -24,11 +24,17 @@ int prev_ir_readings [irSensorCount];
 
 byte debounceDelay = 500;
 boolean hallEffect = true;
+byte arrayIndex;
+int prevSensorReading;
 
 void setup() {
 
-  for (byte h = 0; h < hallEffectCount; h++) {
+  for (byte h = 3; h < hallEffectCount; h++) {
     pinMode(hall_effect[h], OUTPUT);
+  }
+
+  for (byte i = 1; i < irSensorCount; i++){
+    pinMode(ir_sensor[i], OUTPUT);
   }
 
 
@@ -44,33 +50,33 @@ void readSensors() {
     int currentIrRead;
     for (byte i = 3; i < hallEffectCount; i++) {
       currentHallRead = digitalRead(hall_effect[i]);
-      //smoothData(currentHallRead, prev_hall_readings[i], i);
+      //smoothData(currentHallRead, prev_hall_readings[i]);
       //hallEffect = true;
+      // arrayIndex = i;
+      //prevSensorReading = prev_hall_readings[i]
       prev_hall_readings[i] = currentHallRead;
 
     }
 
     for (byte h = 1; h < irSensorCount; h ++) {
       currentIrRead = digitalRead(ir_sensor[h]);
-      //smoothData(currentIrRead, prev_ir_readings[h], h);
+      //smoothData(currentIrRead, prev_ir_readings[h]);
       //hallEffect = false;
+      //arrayIndex = h;
+      //prevSensorReading = prev_ir_readings[h];
       prev_ir_readings[h] = currentIrRead;
     }
 
 
   }
 
-void smoothData(int senseData, int prevSenseData, byte index) {
+void smoothData(int senseData) {
   int sensorData;
-  int prevSensorData;
-  int total,average;
-  byte arrayIndex;
-  
+  int total,average;  
 
 //store passed down var's
   sensorData = senseData;
-  prevSensorData = prevSenseData;
-  arrayIndex = index;
+  
   
 
 //setup 2D data smoothing array
@@ -92,21 +98,20 @@ int totalSensorIndex = 0;
   delay(1);
 
 //debounce timer
-  debounce(average, prevSensorData);
+  debounce(average);
 
 
 
 }
 
-void debounce(int avg, int prevData){
+void debounce(int avg){
 
    int threshold;
    int sensorData = avg;
-   int prevSensorData = prevData;
-   long lastDebounceTime = 0;
+//   long lastDebounceTime = 0;
    
 
-  unsigned long arrayLastDebounceTime [6][1];
+  unsigned long arrayLastDebounceTime [6];
 
 if (hallEffect){
   threshold = 0;
@@ -114,19 +119,23 @@ if (hallEffect){
 else {
   threshold = 850;
 }
-   
-    if (abs(sensorData - prevSensorData) > threshold) {
-     lastDebounceTime = millis();
-  }
-  if (millis() - lastDebounceTime > debounceDelay) {
 
-        
-      
-//      checkObjects(abs(idWeight));
-//      previousMeasuredWeight = measuredWeight;
+
+   
+    if (abs(sensorData - prevSensorReading) > threshold) {
+     arrayLastDebounceTime[arrayIndex] = millis();
+  }
+  if (millis() - arrayLastDebounceTime[arrayIndex] > debounceDelay) { 
+//      logData(productName[arrayIndex],
       
     }    
 }
+
+void logData(char *str, char *stat) {
+  
+}
+
+
 
 
   
