@@ -1,22 +1,22 @@
 
 //---setup hall effect pin array
 byte hall_effect [] = {
-  8, 7, 6, 5, 4, 3
+  3, 4, 5, 6, 7, 8
 };
 const byte hallEffectCount = 6;
 
 
 //---setup IR Sensor array
 byte ir_sensor [] = {
-  1, 2
+  A1, A2
 };
 const byte irSensorCount = 2;
 
 //---setup product names array
 char* productName [] = {
-  "soap", "salve", "lotion", "spot healer", "nail stick"
+  "soap", "salve", "lotion 1", "lotion 2", "spot healer 1", "spot heal 2", "nail stick 1", "nail stick 2"
 };
-const byte productNamesCount = 5;
+const byte productNamesCount = 8;
 
 //---setup sensor data arrays
 int prev_hall_readings [hallEffectCount];
@@ -32,11 +32,11 @@ void setup() {
   Serial.begin(9600);
 
   for (byte h = 3; h < hallEffectCount; h++) {
-    pinMode(hall_effect[h], OUTPUT);
+    pinMode(hall_effect[h], INPUT);
   }
 
   for (byte i = 1; i < irSensorCount; i++) {
-    pinMode(ir_sensor[i], OUTPUT);
+    pinMode(ir_sensor[i], INPUT);
   }
 
 
@@ -45,6 +45,7 @@ void setup() {
 
 void loop() {
   readSensors();
+  delay(1000);
 }
 
 void readSensors() {
@@ -53,23 +54,25 @@ void readSensors() {
   int currentHallRead;
   int currentIrRead;
   
-  for (byte i = 3; i < hallEffectCount; i++) {
+    for (byte h = 0; h <= irSensorCount; h ++) {
+    currentIrRead = digitalRead(ir_sensor[h]);
+    hallEffect = false;
+    arrayIndex = h++;
+    prevSensorReading = prev_ir_readings[h];
+    Serial.println(arrayIndex);
+    smoothData(currentIrRead);
+    prev_ir_readings[h] = currentIrRead;
+  }
+  
+  for (byte i = 0; i <= hallEffectCount; i++) {
     currentHallRead = digitalRead(hall_effect[i]);
     hallEffect = true;
-    arrayIndex = i;
+    arrayIndex = i+=3;
     prevSensorReading = prev_hall_readings[i];
+    Serial.println(arrayIndex);
     smoothData(currentHallRead);
     prev_hall_readings[i] = currentHallRead;
 
-  }
-
-  for (byte h = 1; h < irSensorCount; h ++) {
-    currentIrRead = digitalRead(ir_sensor[h]);
-    hallEffect = false;
-    arrayIndex = h;
-    prevSensorReading = prev_ir_readings[h];
-    smoothData(currentIrRead);
-    prev_ir_readings[h] = currentIrRead;
   }
 
 
@@ -99,7 +102,7 @@ void smoothData(int senseData) {
 
   average = total / 10;
   delay(1);
-
+//Serial.println(average);
   //debounce timer
   debounceAndCheck(average);
 
@@ -110,14 +113,14 @@ void debounceAndCheck(int avg) {
   int threshold;
   int sensorData = avg;
   int sensorDifference;
-  unsigned long arrayLastDebounceTime [6];
+  unsigned long arrayLastDebounceTime [8];
 
   //check if the reading is coming from a hall (digital) or IR (analog) sensor
   if (hallEffect) {
     threshold = 0;
   }
   else {
-    threshold = 850;
+    threshold = 1024;
   }
 
   //check difference to see if it's meaningful and if it's a pick or place
@@ -130,10 +133,10 @@ void debounceAndCheck(int avg) {
 
    //determine if it's a pick or place
     if (sensorDifference > 0) {
-      logData(productName[arrayIndex], "pick");
+    //  logData(productName[arrayIndex], "pick");
     }
     else {
-      logData(productName[arrayIndex], "place");
+    //  logData(productName[arrayIndex], "place");
     }
   }
 }
