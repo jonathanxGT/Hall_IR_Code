@@ -23,8 +23,7 @@ int prev_hall_readings [hallEffectCount];
 int prev_ir_readings [irSensorCount];
 
 byte debounceDelay = 500;
-boolean movedForReal = false;
-boolean pickedUp = false;
+boolean hallEffect = true;
 
 void setup() {
 
@@ -45,32 +44,34 @@ void readSensors() {
     int currentIrRead;
     for (byte i = 3; i < hallEffectCount; i++) {
       currentHallRead = digitalRead(hall_effect[i]);
-      //smoothData(currentHallRead, prev_hall_readings[i], i, true);
+      //smoothData(currentHallRead, prev_hall_readings[i], i);
+      //hallEffect = true;
       prev_hall_readings[i] = currentHallRead;
 
     }
 
     for (byte h = 1; h < irSensorCount; h ++) {
       currentIrRead = digitalRead(ir_sensor[h]);
-      //smoothData(currentIrRead, prev_ir_readings[h], h, false);
+      //smoothData(currentIrRead, prev_ir_readings[h], h);
+      //hallEffect = false;
       prev_ir_readings[h] = currentIrRead;
     }
 
 
   }
 
-void smoothData(int senseData, int prevSenseData, byte index, boolean sensorGate) {
+void smoothData(int senseData, int prevSenseData, byte index) {
   int sensorData;
   int prevSensorData;
   int total,average;
   byte arrayIndex;
-  boolean hallEffect;
+  
 
 //store passed down var's
   sensorData = senseData;
   prevSensorData = prevSenseData;
   arrayIndex = index;
-  hallEffect = sensorGate;
+  
 
 //setup 2D data smoothing array
 int totalSensorData [6][10];
@@ -91,20 +92,21 @@ int totalSensorIndex = 0;
   delay(1);
 
 //debounce timer
-
-  debounce(average, prevSensorData, hallEffect);
+  debounce(average, prevSensorData);
 
 
 
 }
 
-void debounce(int avg, int prevData, boolean sensor){
+void debounce(int avg, int prevData){
 
    int threshold;
    int sensorData = avg;
    int prevSensorData = prevData;
    long lastDebounceTime = 0;
-   boolean hallEffect = sensor;
+   
+
+  unsigned long arrayLastDebounceTime [6][1];
 
 if (hallEffect){
   threshold = 0;
