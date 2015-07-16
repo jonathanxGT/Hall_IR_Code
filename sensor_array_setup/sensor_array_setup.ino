@@ -91,29 +91,34 @@ int totalSensorIndex = 0;
   delay(1);
 
 //debounce timer
-if (hallEffect){
-  hallDebounce(average, prevSensorData);
-}
-else {
-  irDebounce(average, prevSensorData);
-}
+
+  debounce(average, prevSensorData, hallEffect);
+
 
 
 }
 
-void hallDebounce(int avg, int prevData){
+void debounce(int avg, int prevData, boolean sensor){
 
-   int threshold = 0;
+   int threshold;
    int sensorData = avg;
    int prevSensorData = prevData;
    long lastDebounceTime = 0;
+   boolean hallEffect = sensor;
+
+if (hallEffect){
+  threshold = 0;
+}
+else {
+  threshold = 850;
+}
    
     if (abs(sensorData - prevSensorData) > threshold) {
      lastDebounceTime = millis();
   }
   if (millis() - lastDebounceTime > debounceDelay) {
 
-        pickedUp = true;
+        
       
 //      checkObjects(abs(idWeight));
 //      previousMeasuredWeight = measuredWeight;
@@ -121,9 +126,6 @@ void hallDebounce(int avg, int prevData){
     }    
 }
 
-void irDebounce(int avg, int prevData){
-   
-}
 
   
 
