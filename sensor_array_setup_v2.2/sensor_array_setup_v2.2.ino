@@ -24,7 +24,10 @@ int total = 0;
 //---setup debounceTime array
 long arrayLastDebounceTime [sensorCount];
 
-byte debounceDelay = 100;
+//---setup pickedUp array
+boolean arrayPickedUp [sensorCount];
+
+byte debounceDelay = 2000;
 boolean hallEffect = true;
 byte arrayIndex;
 int prevSensorReading;
@@ -36,6 +39,8 @@ void setup() {
   for (byte h = 0; h < sensorCount; h++) {
     pinMode(sensor[h], INPUT);
     prev_sensor_readings [h] = 0;
+    arrayPickedUp [h] = false;
+    arrayLastDebounceTime[arrayIndex] = 0;
   }
 
 }
@@ -98,7 +103,7 @@ void debounceAndCheck(int avg) {
 
   int threshold;
   int sensorDifference;
-  boolean pickedUp = false;
+  
 
   //codeDebug(avg);
   //check if the reading is coming from a hall (digital) or IR (analog) sensor
@@ -113,21 +118,25 @@ void debounceAndCheck(int avg) {
   sensorDifference = (avg -  prev_sensor_readings[arrayIndex]);
 
   if (abs(sensorDifference) > threshold) {
-    arrayLastDebounceTime[arrayIndex] = millis();
-    pickedUp = true;
-    if (arrayIndex == 3) {
-      codeDebug(sensorDifference);
-    }
-
+   arrayPickedUp[arrayIndex] = true;
+    arrayLastDebounceTime[arrayIndex] = millis(); 
+    Serial.println("in threshold");
+    Serial.println(arrayPickedUp[arrayIndex]);
   }
-
-
-  if ((millis() - arrayLastDebounceTime[arrayIndex]) > debounceDelay && pickedUp) {
-      if (arrayIndex == 3) {
-      Serial.println((millis() - arrayLastDebounceTime[arrayIndex]));
+  
+  if (arrayIndex == 3) {
+    //codeDebug(millis() - arrayLastDebounceTime[arrayIndex]);
+    //Serial.println(sensorDifference);
     }
-   // if (pickedUp) {
 
+
+  if ((millis() - arrayLastDebounceTime[arrayIndex]) > debounceDelay) {
+      if (arrayIndex == 3) {
+     // Serial.println((millis() - arrayLastDebounceTime[arrayIndex]));
+    // Serial.println(pickedUp);
+    }
+    if (arrayPickedUp[arrayIndex]) {
+      Serial.println("in pickedUp check");
       //determine if it's a pick or place
       if (sensorDifference > 0) {
         logData(productName[arrayIndex], "pick");
@@ -135,8 +144,8 @@ void debounceAndCheck(int avg) {
       else {
         logData(productName[arrayIndex], "place");
       }
-      pickedUp = false;
-   // }
+      arrayPickedUp[arrayIndex] = false;
+    }
 
   }
   prev_sensor_readings[arrayIndex] = avg;
