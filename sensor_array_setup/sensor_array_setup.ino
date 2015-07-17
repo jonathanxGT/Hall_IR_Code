@@ -1,21 +1,32 @@
 
 //---setup sensor pin array
-byte sensor [] = {
+int sensor [] = {
   A1, A2, 3, 4, 5, 6, 7, 8
 };
 const byte sensorCount = 8;
 
 //---setup product names array
 char* productName [] = {
-  "soap", "salve", "lotion 1", "lotion 2", "spot healer 1", "spot heal 2", "nail stick 1", "nail stick 2"
+  "soap", "salve", "lotion 1", "lotion 2", "spot healer 1",
+  "spot heal 2", "nail stick 1", "nail stick 2"
 };
 const byte productNamesCount = 8;
 
 //---setup sensor data arrays
 int prev_sensor_readings [sensorCount];
 
+//---setup 2D data smoothing array
+int totalSensorData [sensorCount][10];
+int totalDataArray [sensorCount];
+int total = 0;
+
+
+//---setup debounceTime array
+unsigned long arrayLastDebounceTime [sensorCount];
+
 byte debounceDelay = 1000;
 boolean hallEffect = true;
+boolean pickedUp = false;
 byte arrayIndex;
 int prevSensorReading;
 
@@ -32,7 +43,6 @@ void setup() {
 
 void loop() {
   readSensors();
-  delay(10000);
 }
 
 void readSensors() {
@@ -50,34 +60,34 @@ void readSensors() {
         hallEffect = true;
       }
       arrayIndex = h;
-      prevSensorReading = prev_sensor_readings[h];
       smoothData(currentSensorRead, j);
 
     }
+   // delay(1000);
   }
 
 }
 
-void smoothData(int senseData, byte j) {
-  int sensorData;
-  int total = 0;
+void smoothData(int sensorData, byte j) {
+
   int average = 0;
-  
-
-  //store passed down var's
-  sensorData = senseData;
-
-  //setup 2D data smoothing array
-  int totalSensorData [sensorCount][10];
+  //for reference
+  // int totalSensorData [sensorCount][10];
 
 
   //data smoothing
-  total = total - totalSensorData[arrayIndex][j];
-  totalSensorData[arrayIndex][j] = sensorData;
-  total = total + totalSensorData[arrayIndex][j];
 
-  average = total / 10;
-  
+  totalDataArray [arrayIndex] = totalDataArray [arrayIndex] - totalSensorData[arrayIndex][j];
+  totalSensorData[arrayIndex][j] = sensorData;
+  totalDataArray [arrayIndex] = totalDataArray [arrayIndex] + totalSensorData[arrayIndex][j];
+
+  //  for ( byte k = 0; k < 10; k++){
+  //    total = total + totalSensorData[arrayIndex][k];
+  //  }
+  average = totalDataArray [arrayIndex] / 10;
+
+
+  //codeDebug(totalSensorData[arrayIndex][j]);
   delay(1);
   //Serial.println(average);
   //debounce timer
@@ -89,8 +99,9 @@ void debounceAndCheck(int avg) {
 
   int threshold;
   int sensorDifference;
-  unsigned long arrayLastDebounceTime [sensorCount];
 
+
+  //codeDebug(avg);
   //check if the reading is coming from a hall (digital) or IR (analog) sensor
   if (hallEffect) {
     threshold = 0;
@@ -100,24 +111,29 @@ void debounceAndCheck(int avg) {
   }
 
   //check difference to see if it's meaningful and if it's a pick or place
-  sensorDifference = avg - prevSensorReading;
+  sensorDifference = avg -  prev_sensor_readings[arrayIndex];
 
-  codeDebug(sensorDifference);
 
   if (abs(sensorDifference) > threshold) {
     arrayLastDebounceTime[arrayIndex] = millis();
+    pickedUp = true;
+    codeDebug(arrayLastDebounceTime[arrayIndex]);
   }
   if (millis() - arrayLastDebounceTime[arrayIndex] > debounceDelay) {
+    if (pickedUp) {
+      //determine if it's a pick or place
+      if (sensorDifference > 0) {
+        logData(productName[arrayIndex], "pick");
+      }
+      else {
+        logData(productName[arrayIndex], "place");
+      }
+      pickedUp = false;
+    }
 
-    //determine if it's a pick or place
-    if (sensorDifference > 0) {
-      logData(productName[arrayIndex], "pick");
-    }
-    else {
-      logData(productName[arrayIndex], "place");
-    }
   }
   prev_sensor_readings[arrayIndex] = avg;
+
 }
 
 
