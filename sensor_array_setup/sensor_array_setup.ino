@@ -22,11 +22,10 @@ int total = 0;
 
 
 //---setup debounceTime array
-unsigned long arrayLastDebounceTime [sensorCount];
+long arrayLastDebounceTime [sensorCount];
 
-byte debounceDelay = 1000;
+byte debounceDelay = 100;
 boolean hallEffect = true;
-boolean pickedUp = false;
 byte arrayIndex;
 int prevSensorReading;
 
@@ -63,7 +62,7 @@ void readSensors() {
       smoothData(currentSensorRead, j);
 
     }
-   // delay(1000);
+    //delay(500);
   }
 
 }
@@ -99,7 +98,7 @@ void debounceAndCheck(int avg) {
 
   int threshold;
   int sensorDifference;
-
+  boolean pickedUp = false;
 
   //codeDebug(avg);
   //check if the reading is coming from a hall (digital) or IR (analog) sensor
@@ -111,16 +110,24 @@ void debounceAndCheck(int avg) {
   }
 
   //check difference to see if it's meaningful and if it's a pick or place
-  sensorDifference = avg -  prev_sensor_readings[arrayIndex];
-
+  sensorDifference = (avg -  prev_sensor_readings[arrayIndex]);
 
   if (abs(sensorDifference) > threshold) {
     arrayLastDebounceTime[arrayIndex] = millis();
     pickedUp = true;
-    codeDebug(arrayLastDebounceTime[arrayIndex]);
+    if (arrayIndex == 3) {
+      codeDebug(sensorDifference);
+    }
+
   }
-  if (millis() - arrayLastDebounceTime[arrayIndex] > debounceDelay) {
+
+
+  if ((millis() - arrayLastDebounceTime[arrayIndex]) > debounceDelay) {
+      if (arrayIndex == 3) {
+      Serial.println((millis() - arrayLastDebounceTime[arrayIndex]));
+    }
     if (pickedUp) {
+
       //determine if it's a pick or place
       if (sensorDifference > 0) {
         logData(productName[arrayIndex], "pick");
@@ -145,12 +152,12 @@ void logData(char *str, char *stat) {
 
 }
 
-void codeDebug(int sensorDiff) {
+void codeDebug(int x) {
   Serial.print(arrayIndex);
   Serial.print(' ');
-  Serial.print(sensorDiff);
+  Serial.print(x);
   Serial.print(' ');
-  Serial.println(productName[arrayIndex]);
+  Serial.println(productName[3]);
 }
 
 
