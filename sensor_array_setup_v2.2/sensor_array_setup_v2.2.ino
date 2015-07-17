@@ -122,11 +122,11 @@ void debounceAndCheck(int avg) {
   }
 
 
-  if ((millis() - arrayLastDebounceTime[arrayIndex]) > debounceDelay) {
+  if ((millis() - arrayLastDebounceTime[arrayIndex]) > debounceDelay && pickedUp) {
       if (arrayIndex == 3) {
       Serial.println((millis() - arrayLastDebounceTime[arrayIndex]));
     }
-    if (pickedUp) {
+   // if (pickedUp) {
 
       //determine if it's a pick or place
       if (sensorDifference > 0) {
@@ -136,7 +136,7 @@ void debounceAndCheck(int avg) {
         logData(productName[arrayIndex], "place");
       }
       pickedUp = false;
-    }
+   // }
 
   }
   prev_sensor_readings[arrayIndex] = avg;
