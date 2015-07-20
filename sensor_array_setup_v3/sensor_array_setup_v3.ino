@@ -88,15 +88,10 @@ void smoothData(int sensorData, byte j) {
   totalSensorData[arrayIndex][j] = sensorData;
   totalDataArray [arrayIndex] = totalDataArray [arrayIndex] + totalSensorData[arrayIndex][j];
 
-  //  for ( byte k = 0; k < 10; k++){
-  //    total = total + totalSensorData[arrayIndex][k];
-  //  }
   average = totalDataArray [arrayIndex] / 10;
 
-
-  //codeDebug(totalSensorData[arrayIndex][j]);
   delay(1);
-  //Serial.println(average);
+
   //debounce timer
   debounceAndCheck(average);
 
@@ -137,21 +132,37 @@ void debounceAndCheck(int avg) {
 
 
   debounceDifference = millis() - arrayLastDebounceTime[arrayIndex];
-  
+
   if ( debounceDifference > debounceDelay) {
-    if (arrayIndex == 3) {
-      //Serial.println( arrayLastDebounceTime[arrayIndex]);
-    }
+
     if (arrayPickedUp[arrayIndex]) {
 
       //determine if it's a pick or place
       if (arraySensorDifference[arrayIndex] > 0) {
         logData(productName[arrayIndex], "pick");
+        if (arrayIndex) {
+          Serial.print("pick debounce stuffs: ");
+          Serial.print(' ');
+          Serial.print(millis());
+          Serial.print(' ');
+          Serial.print(arrayLastDebounceTime[arrayIndex]);
+          Serial.print(' ');
+          Serial.println( debounceDifference);
+        }
       }
       else if (arraySensorDifference[arrayIndex] < 0) {
         logData(productName[arrayIndex], "place");
+        if (arrayIndex) {
+          Serial.print("place debounce stuffs: ");
+          Serial.print(' ');
+          Serial.print(millis());
+          Serial.print(' ');
+          Serial.print(arrayLastDebounceTime[arrayIndex]);
+          Serial.print(' ');
+          Serial.println( debounceDifference);
+        }
       }
-      
+
       //to prevent multiple readings for a single even
       arrayPickedUp[arrayIndex] = false;
     }
