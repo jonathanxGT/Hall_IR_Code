@@ -135,7 +135,9 @@ void debounceAndCheck(int avg) {
 
   }
 
+
   debounceDifference = millis() - arrayLastDebounceTime[arrayIndex];
+  
   if ( debounceDifference > debounceDelay) {
     if (arrayIndex == 3) {
       //Serial.println( arrayLastDebounceTime[arrayIndex]);
@@ -149,6 +151,8 @@ void debounceAndCheck(int avg) {
       else if (arraySensorDifference[arrayIndex] < 0) {
         logData(productName[arrayIndex], "place");
       }
+      
+      //to prevent multiple readings for a single even
       arrayPickedUp[arrayIndex] = false;
     }
 
