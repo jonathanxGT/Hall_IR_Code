@@ -17,6 +17,7 @@ int prev_sensor_readings [sensorCount];
 
 //---setup 2D data smoothing array
 int totalSensorData [sensorCount][10];
+
 int totalDataArray [sensorCount];
 
 
@@ -24,13 +25,10 @@ int totalDataArray [sensorCount];
 //---setup debounceTime array
 unsigned long arrayLastDebounceTime [sensorCount];
 
-//---setup pickedUp array
-boolean arrayPickedUp [sensorCount];
-
 //---sensor difference array
 int arraySensorDifference [sensorCount];
 
-byte debounceDelay = 2000;
+int debounceDelay = 2000;
 boolean hallEffect = true;
 byte arrayIndex;
 int prevSensorReading;
@@ -42,7 +40,6 @@ void setup() {
   for (byte h = 0; h < sensorCount; h++) {
     pinMode(sensor[h], INPUT);
     prev_sensor_readings [h] = 0;
-    arrayPickedUp [h] = false;
     arrayLastDebounceTime[arrayIndex] = 0;
   }
 
@@ -78,10 +75,9 @@ void readSensors() {
 void smoothData(int sensorData, byte j) {
 
   int average = 0;
+
   //for reference
   // int totalSensorData [sensorCount][10];
-
-
   //data smoothing
 
   totalDataArray [arrayIndex] = totalDataArray [arrayIndex] - totalSensorData[arrayIndex][j];
@@ -103,8 +99,6 @@ void debounceAndCheck(int avg) {
   int sensorDifference;
   long debounceDifference;
 
-
-  //codeDebug(avg);
   //check if the reading is coming from a hall (digital) or IR (analog) sensor
   if (hallEffect) {
     threshold = 0;
@@ -114,60 +108,27 @@ void debounceAndCheck(int avg) {
   }
 
   //check difference to see if it's meaningful and if it's a pick or place
-  sensorDifference = (avg -  prev_sensor_readings[arrayIndex]);
-
+  sensorDifference = (avg - prev_sensor_readings[arrayIndex]);
   if (abs(sensorDifference) > threshold) {
+
+    //store difference in array for each sensor
     arraySensorDifference[arrayIndex] = sensorDifference;
-    arrayPickedUp[arrayIndex] = true;
-    arrayLastDebounceTime[arrayIndex] = millis();
-    //    codeDebug(sensorDifference);
 
-  }
-
-  if (arrayIndex == 3) {
-    // codeDebug(millis() - arrayLastDebounceTime[arrayIndex], arraySensorDifference[arrayIndex]);
-    // Serial.println(sensorDifference);
-
-  }
-
-
-  debounceDifference = millis() - arrayLastDebounceTime[arrayIndex];
-
-  if ( debounceDifference > debounceDelay) {
-
-    if (arrayPickedUp[arrayIndex]) {
-
+    //see if reading was greater than debounce delay
+    debounceDifference = millis() - arrayLastDebounceTime[arrayIndex];
+    if ( debounceDifference > debounceDelay) {
+      
       //determine if it's a pick or place
       if (arraySensorDifference[arrayIndex] > 0) {
         logData(productName[arrayIndex], "pick");
-        if (arrayIndex) {
-          Serial.print("pick debounce stuffs: ");
-          Serial.print(' ');
-          Serial.print(millis());
-          Serial.print(' ');
-          Serial.print(arrayLastDebounceTime[arrayIndex]);
-          Serial.print(' ');
-          Serial.println( debounceDifference);
-        }
       }
       else if (arraySensorDifference[arrayIndex] < 0) {
         logData(productName[arrayIndex], "place");
-        if (arrayIndex) {
-          Serial.print("place debounce stuffs: ");
-          Serial.print(' ');
-          Serial.print(millis());
-          Serial.print(' ');
-          Serial.print(arrayLastDebounceTime[arrayIndex]);
-          Serial.print(' ');
-          Serial.println( debounceDifference);
-        }
       }
-
-      //to prevent multiple readings for a single even
-      arrayPickedUp[arrayIndex] = false;
+      arrayLastDebounceTime[arrayIndex] = millis();
     }
-
   }
+
   prev_sensor_readings[arrayIndex] = avg;
 
 }
