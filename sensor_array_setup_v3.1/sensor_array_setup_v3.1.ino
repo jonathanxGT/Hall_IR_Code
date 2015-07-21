@@ -28,8 +28,7 @@ int iRThresh[2];
 unsigned long arrayLastDebounceTime [sensorCount];
 
 
-int debounceDelay = 1000;
-boolean hallEffect = true;
+int debounceDelay = 750;
 byte arrayIndex;
 
 
@@ -68,12 +67,9 @@ void readSensors() {
 
       if (h < 2) {
         currentSensorRead = analogRead(sensor[h]);
-        hallEffect = false;
       }
       else {
         currentSensorRead = digitalRead(sensor[h]);
-        hallEffect = true;
-
       }
 
       arrayIndex = h;
@@ -119,7 +115,7 @@ void debounceAndCheck(int avg) {
 
   //check if the reading is coming from a hall (digital) or IR (analog) sensor
 
-  if (hallEffect) {
+  if (arrayIndex > 1) {
     threshold = 0;
   }
 
@@ -131,7 +127,7 @@ void debounceAndCheck(int avg) {
   if (arrayIndex < 2 && avg > iRThresh[arrayIndex]) {
     threshold = iRThresh[arrayIndex] - 50;
   }
-  else {
+  else if (arrayIndex < 2 && avg < iRThresh[arrayIndex]){
     threshold = iRThresh[arrayIndex];
   }
   
