@@ -122,6 +122,7 @@ void debounceAndCheck(int avg) {
       if (arraySensorDifference[arrayIndex] > 0) {
         logData(productName[arrayIndex], "pick");
       }
+      
       else if (arraySensorDifference[arrayIndex] < 0) {
         logData(productName[arrayIndex], "place");
       }
