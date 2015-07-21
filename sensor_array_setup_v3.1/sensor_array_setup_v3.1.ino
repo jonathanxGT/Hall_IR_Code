@@ -22,8 +22,6 @@ int totalSensorData [sensorCount][10];
 */
 int allDataArray[sensorCount][3];
 
-int iRThresh[2];
-
 //---setup debounceTime array
 unsigned long arrayLastDebounceTime [sensorCount];
 
@@ -39,14 +37,6 @@ void setup() {
   for (byte h = 0; h < sensorCount; h++) {
     pinMode(sensor[h], INPUT);
     arrayLastDebounceTime[arrayIndex] = 0;
-    if (h == 0) {
-      iRThresh [h] = analogRead(sensor[h]) + 100;
-    }
-    if (h == 1) {
-      iRThresh [h] = analogRead(sensor[h]) + 100;
-    }
-    Serial.println(iRThresh[0]);
-    Serial.println(iRThresh[1]);
     for (byte i = 0; i < 3; i++) {
       allDataArray[sensorCount] [3] = 0;
     }
@@ -124,10 +114,10 @@ void debounceAndCheck(int avg) {
   sensorDifference = (avg - allDataArray[arrayIndex] [1]);
 
   //check if the IR sensor is a place and then adjust IR threshold for a place
-  if (arrayIndex < 2 && avg > iRThresh[arrayIndex]) {
+  if (arrayIndex < 2 ) {
     threshold = 5;
   }
-  else if (arrayIndex < 2 && avg < iRThresh[arrayIndex]){   
+  else if (arrayIndex < 2 ){   
     threshold = 8;
   }
 
@@ -157,9 +147,6 @@ void debounceAndCheck(int avg) {
     //see if reading was greater than debounce delay
     debounceDifference = millis() - arrayLastDebounceTime[arrayIndex];
     if ( debounceDifference > debounceDelay) {
-      if (arrayIndex == 0){
-      Serial.println(allDataArray[arrayIndex][2]);
-      }
 
       //determine if it's a pick or place
       if (allDataArray[arrayIndex][2] > 0) {
