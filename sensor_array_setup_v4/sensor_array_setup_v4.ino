@@ -100,13 +100,15 @@ void smoothData(int sensorData, byte j) {
 void debounceAndCheck(int avg) {
 
   int threshold;
+  int hallThresh = 0;
+  int irThresh = 5;
   int sensorDifference;
   long debounceDifference;
 
   //check if the reading is coming from a hall (digital) or IR (analog) sensor
 
   if (arrayIndex > 1) {
-    threshold = 0;
+    threshold = hallThresh;
   }
 
 
@@ -115,10 +117,10 @@ void debounceAndCheck(int avg) {
 
   //check if the IR sensor is a place and then adjust IR threshold for a place
   if (arrayIndex < 2 ) {
-    threshold = 5;
+    threshold = irThresh;
   }
   else if (arrayIndex < 2 ){   
-    threshold = 8;
+    threshold = irThresh + 3;
   }
 
   // delay(10);
