@@ -114,15 +114,15 @@ void debounceAndCheck(int avg) {
   sensorDifference = (avg - allDataArray[arrayIndex] [1]);
 
   //check if the IR sensor is a place and then adjust IR threshold for a place
-  if (arrayIndex < 2 ) {
+  if (arrayIndex < 2 && sensorDifference > 0) {
     threshold = 5;
   }
-  else if (arrayIndex < 2 ){   
+  else if (arrayIndex < 2 && sensorDifference < 0){   
     threshold = 8;
   }
 
   // delay(10);
-  
+//  
 //    if (arrayIndex == 0){
 //      Serial.print(arrayIndex);
 //      Serial.print(' ');
