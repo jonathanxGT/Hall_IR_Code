@@ -56,9 +56,12 @@ void setup() {
   // use debugging LEDs
   pinMode(redLEDpin, OUTPUT);
 
-  logfile.println("millis,stamp,datetime,sensor name, status");
+  initializeSD();
+  connectToRTC();
+
+  logfile.println("millis,stamp,datetime,product name, status");
 #if ECHO_TO_SERIAL
-  Serial.println("millis,stamp,datetime,sensor name, status");
+  Serial.println("millis,stamp,datetime,product name, status");
 #endif //ECHO_TO_SERIAL
 
   for (byte h = 0; h < sensorCount; h++) {
@@ -179,7 +182,7 @@ void debounceAndCheck(int avg) {
 void logData(char *str, char *stat) {
 
   DateTime now;
-  
+
 
   logfile.print(m);           // milliseconds since start
   logfile.print(", ");
@@ -209,11 +212,9 @@ void logData(char *str, char *stat) {
 
   //log activity
   logfile.print(", ");
-  logfile.print(' ');
+  logfile.print(str);
   logfile.print(", ");
-  logfile.print(' ');
-  logfile.print(", ");
-  logfile.print(' ');
+  logfile.print(stat);
   logfile.println();
 
 #if ECHO_TO_SERIAL
@@ -231,15 +232,13 @@ void logData(char *str, char *stat) {
   Serial.print(now.second(), DEC);
 
   Serial.print(F(", "));
-  Serial.print(' ');
+  Serial.print(str);
   Serial.print(F(", "));
-  Serial.print(' ');
-  Serial.print(F(", "));
-  Serial.print(' ');
+  Serial.print(stat);
   Serial.println();
 #endif ECHO_TO_SERIAL
 
-  
+
 
   // Now we write data to disk! Don't sync too often - requires 2048 bytes of I/O to SD card
   // which uses a bunch of power and takes time
