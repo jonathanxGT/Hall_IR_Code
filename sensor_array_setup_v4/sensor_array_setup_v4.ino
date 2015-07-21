@@ -275,7 +275,7 @@ void initializeSD() {
 
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
-    error(F("Card failed, or not present"));
+    error("Card failed, or not present");
   }
   Serial.println(F("card initialized."));
 
@@ -292,7 +292,7 @@ void initializeSD() {
   }
 
   if (! logfile) {
-    error(F("couldnt create file"));
+    error("couldnt create file");
   }
 
   Serial.print(F("Logging to: "));
@@ -303,9 +303,9 @@ void connectToRTC() {
   // connect to RTC
   Wire.begin();
   if (!RTC.begin()) {
-    logfile.println("RTC failed");
+    logfile.println(F("RTC failed"));
 #if ECHO_TO_SERIAL
-    Serial.println("RTC failed");
+    Serial.println(F("RTC failed"));
 #endif  //ECHO_TO_SERIAL
   }
 }
