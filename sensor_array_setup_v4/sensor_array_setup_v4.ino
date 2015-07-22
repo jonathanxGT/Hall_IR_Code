@@ -61,7 +61,7 @@ void setup() {
 
   logfile.println("millis,stamp,datetime,product name, status");
 #if ECHO_TO_SERIAL
-  Serial.println("millis,stamp,datetime,product name, status");
+  Serial.println(F("millis,stamp,datetime,product name, status"));
 #endif //ECHO_TO_SERIAL
 
   for (byte h = 0; h < sensorCount; h++) {
@@ -189,7 +189,7 @@ void logData(char *str, char *stat) {
 
 #if ECHO_TO_SERIAL
   Serial.print(m);         // milliseconds since start
-  Serial.print(", ");
+  Serial.print(F(", "));
 #endif
 
   // fetch the time
@@ -255,7 +255,7 @@ void logData(char *str, char *stat) {
 
 void error(char *str)
 {
-  Serial.print("error: ");
+  Serial.print(F("error: "));
   Serial.println(str);
 
   // red LED indicates error
@@ -265,6 +265,9 @@ void error(char *str)
 }
 
 void initializeSD() {
+
+  DateTime fileDate;
+  fileDate = RTC.now();
 
   // initialize the SD card
   Serial.print(F("Initializing SD card..."));
