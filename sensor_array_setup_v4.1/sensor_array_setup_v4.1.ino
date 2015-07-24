@@ -17,6 +17,8 @@ RTC_DS1307 RTC;
 
 const int chipSelect = 10;
 
+String lastHour;
+
 //---setup sensor pin array
 int sensor [] = {
   A1, A2, 3, 4, 5, 6, 7, 8
@@ -64,6 +66,8 @@ void setup() {
   Serial.println(F("millis,stamp,datetime,product name, status"));
 #endif //ECHO_TO_SERIAL
 
+
+
   for (byte h = 0; h < sensorCount; h++) {
     pinMode(sensor[h], INPUT);
     arrayLastDebounceTime[arrayIndex] = 0;
@@ -77,6 +81,7 @@ void setup() {
 void loop() {
   m = millis();
   readSensors();
+  newFile();
 }
 
 void readSensors() {
@@ -92,10 +97,8 @@ void readSensors() {
       else {
         currentSensorRead = digitalRead(sensor[h]);
       }
-
       arrayIndex = h;
       smoothData(currentSensorRead, j);
-
     }
 
   }
@@ -237,8 +240,6 @@ void logData(char *str, char *stat) {
   Serial.println();
 #endif ECHO_TO_SERIAL
 
-
-
   // Now we write data to disk! Don't sync too often - requires 2048 bytes of I/O to SD card
   // which uses a bunch of power and takes time
   if ((millis() - syncTime) < SYNC_INTERVAL) return;
@@ -265,16 +266,6 @@ void error(char *str)
 
 void initializeSD() {
 
-  DateTime fileDate;
-  fileDate = RTC.now();
-
-  String fileDatename;
-  fileDatename = String(fileDate.month()) + '/' + String(fileDate.day()) + '_'
-                 + String(fileDate.hour()) + ':' + String(fileDate.minute()) + ':'
-                 + String(fileDate.second()) + ".txt";
-  Serial.println(fileDatename);
-  Serial.println(fileDatename.length());
-
   // initialize the SD card
   Serial.print(F("Initializing SD card..."));
   // make sure that the default chip select pin is set to
@@ -287,31 +278,8 @@ void initializeSD() {
   }
   Serial.println(F("card initialized."));
 
-
   // create a new file
-  /*
-  char filename[] = "3DMP00.CSV";
-  for (uint8_t i = 0; i < 100; i++) {
-   filename[4] = i / 10 + '0';
-   filename[5] = i % 10 + '0';
-   if (! SD.exists(filename)) {
-     // only open a new file if it doesn't exist
-     logfile = SD.open(filename, FILE_WRITE);
-     break;  // leave the loop!
-   }
-  }
-  */
-  char filename[fileDatename.length()];
-  for (uint8_t i = 0; i <= fileDatename.length(); i++) {
-    filename[i] = fileDatename.charAt(i);
-  }
-
-  Serial.println(filename);
-    logfile = SD.open(filename, FILE_WRITE);
-    if (! logfile) {
-    error("couldnt create file");
-  }
-
+  createNewFile();
 
   /*
     if (! SD.exists(filename)) {
@@ -322,9 +290,6 @@ void initializeSD() {
       error("couldnt create file");
     }
   */
-  Serial.print(F("Logging to: "));
-  Serial.println(filename);
-
 
 }
 
@@ -338,6 +303,85 @@ void connectToRTC() {
     Serial.println(F("RTC failed"));
 #endif  //ECHO_TO_SERIAL
   }
+}
+
+void newFile() {
+
+  DateTime newDate;
+  newDate = RTC.now();
+
+  String newDateCheck;
+  newDateCheck = String(newDate.hour()) + ':' + String(newDate.minute()) + ':' + String(newDate.second());
+  
+
+  if ( newDateCheck == "15:00:0") {
+    logfile.close();
+    delay(1000);
+    createNewFile();
+  }
+  else if (newDateCheck == "8:00:0") {
+    logfile.close();
+    delay(1000);
+    createNewFile();
+  }
+
+  if (lastHour != String(newDate.hour())) {
+    logfile.close();
+    Serial.println(lastHour);
+    Serial.print(newDate.hour());
+    delay(1000);
+    createNewFile();
+    lastHour = String(newDate.hour());
+  }
+
+
+
+
+}
+
+void createNewFile() {
+
+  DateTime fileDate;
+  fileDate = RTC.now();
+
+//  String fileDatename;
+//  fileDatename = String(fileDate.month()) + '/' + String(fileDate.day()) + '_'
+//                 + String(fileDate.hour()) + ':' + String(fileDate.minute()) + ':'
+//                 + String(fileDate.second()) + ".CSV";
+//  Serial.println(fileDatename);
+  
+  lastHour = String(fileDate.month());
+
+  char filename[] = "3DMP00.CSV";
+  for (uint8_t i = 0; i < 100; i++) {
+    filename[4] = i / 10 + '0';
+    filename[5] = i % 10 + '0';
+    if (! SD.exists(filename)) {
+      // only open a new file if it doesn't exist
+      logfile = SD.open(filename, FILE_WRITE);
+      break;  // leave the loop!
+    }
+  }
+
+  /*
+    char filename[fileDatename.length()];
+    for (uint8_t i = 0; i <= fileDatename.length(); i++) {
+      filename[i] = fileDatename.charAt(i);
+      if (! SD.exists(filename)) {
+        // only open a new file if it doesn't exist
+        logfile = SD.open(filename, FILE_WRITE);
+        break;  // leave the loop!
+      }
+    }
+    */
+
+  if (! logfile) {
+    error("couldnt create file");
+  }
+
+  Serial.print(F("Logging to: "));
+  Serial.println(filename);
+
 }
 
 
