@@ -17,7 +17,7 @@ RTC_DS1307 RTC;
 
 const int chipSelect = 10;
 
-String lastHour;
+String lastHour, lastFewMin;
 
 //---setup sensor pin array
 int sensor [] = {
@@ -281,15 +281,6 @@ void initializeSD() {
   // create a new file
   createNewFile();
 
-  /*
-    if (! SD.exists(filename)) {
-      // only open a new file if it doesn't exist
-      logfile = SD.open(filename, FILE_WRITE);
-    }
-    if (! logfile) {
-      error("couldnt create file");
-    }
-  */
 
 }
 
@@ -312,28 +303,39 @@ void newFile() {
 
   String newDateCheck;
   newDateCheck = String(newDate.hour()) + ':' + String(newDate.minute()) + ':' + String(newDate.second());
-  
 
-  if ( newDateCheck == "15:00:0") {
+
+  if ( newDateCheck == "20:00:0") {
+
     logfile.close();
     delay(1000);
     createNewFile();
+    logData("new file", "time");
   }
+
   else if (newDateCheck == "8:00:0") {
     logfile.close();
     delay(1000);
     createNewFile();
+    logData("new file", "time");
   }
 
-  if (lastHour != String(newDate.hour())) {
-    logfile.close();
-    Serial.println(lastHour);
-    Serial.print(newDate.hour());
+  /*
+    if (lastHour != String(newDate.hour())) {
+      //logfile.close();
+      delay(1000);
+      // createNewFile();
+      logData("current", "time");
+
+      lastHour = String(newDate.hour());
+    }
+    */
+
+  if (lastFewMin == (String(newDate.hour()) + ':' + String(newDate.minute()))) {
     delay(1000);
-    createNewFile();
-    lastHour = String(newDate.hour());
+    logData("current", "time");
+    lastFewMin = (String(newDate.hour()) + ':' + String(newDate.minute() + 5));
   }
-
 
 
 
@@ -344,13 +346,15 @@ void createNewFile() {
   DateTime fileDate;
   fileDate = RTC.now();
 
-//  String fileDatename;
-//  fileDatename = String(fileDate.month()) + '/' + String(fileDate.day()) + '_'
-//                 + String(fileDate.hour()) + ':' + String(fileDate.minute()) + ':'
-//                 + String(fileDate.second()) + ".CSV";
-//  Serial.println(fileDatename);
-  
+  //  String fileDatename;
+  //  fileDatename = String(fileDate.month()) + '/' + String(fileDate.day()) + '_'
+  //                 + String(fileDate.hour()) + ':' + String(fileDate.minute()) + ':'
+  //                 + String(fileDate.second()) + ".CSV";
+  //  Serial.println(fileDatename);
+
+  // for hourly new file timer.
   lastHour = String(fileDate.month());
+  lastFewMin = (String(fileDate.hour()) + ':' + String(fileDate.minute() + 5));
 
   char filename[] = "3DMP00.CSV";
   for (uint8_t i = 0; i < 100; i++) {
