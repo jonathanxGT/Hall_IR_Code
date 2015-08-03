@@ -27,8 +27,8 @@ const byte sensorCount = 8;
 
 //---setup product names array
 char* productName [] = {
-  "soap", "salve", "lotion 1", "lotion 2", "spot healer 1",
-  "spot heal 2", "nail stick 1", "nail stick 2"
+  "salve", "soap", "spot healer 2", "spot healer 1", "lotion 2",
+  "lotion 1", "nail stick 1", "nail stick 2"
 };
 
 
@@ -331,11 +331,11 @@ void newFile() {
     }
     */
 
-  if (lastFewMin == (String(newDate.hour()) + ':' + String(newDate.minute()))) {
-    delay(1000);
-    logData("current", "time");
-    lastFewMin = (String(newDate.hour()) + ':' + String(newDate.minute() + 5));
-  }
+//  if (lastFewMin == (String(newDate.hour()) + ':' + String(newDate.minute()))) {
+//    delay(1000);
+//    logData("current", "time");
+//    lastFewMin = (String(newDate.hour()) + ':' + String(newDate.minute() + 5));
+//  }
 
 
 
