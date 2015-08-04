@@ -65,7 +65,6 @@ void setup() {
   pinMode(redLEDpin, OUTPUT);
 
   connectToRTC();
-  // initializeSD();
   setupCam();
 
 
@@ -83,7 +82,7 @@ void setup() {
 void loop() {
   m = millis();
   readSensors();
-  newFile();
+  
 }
 
 void readSensors() {
@@ -180,12 +179,12 @@ void debounceAndCheck(int avg) {
       if (allDataArray[arrayIndex][2] > 0) {
         Serial.println(productName[arrayIndex]);
           takePic();
-        //logData(productName[arrayIndex], "pick");
+        
       }
 
       else if (allDataArray[arrayIndex][2] < 0) {
 
-        // logData(productName[arrayIndex], "place");
+        
       }
       arrayLastDebounceTime[arrayIndex] = millis();
     }
@@ -195,52 +194,6 @@ void debounceAndCheck(int avg) {
 
 }
 
-void logData(char *str, char *stat) {
-
-  DateTime now;
-
-  // fetch the time
-  now = RTC.now();
-
-
-  // blink LED to show we are syncing data to the card & updating FAT!
-  digitalWrite(redLEDpin, HIGH);
-  //digitalWrite(statusLED, HIGH);
-  logfile.flush();
-  //digitalWrite(statusLED, LOW);
-  digitalWrite(redLEDpin, LOW);
-}
-
-void error(char *str)
-{
-  Serial.print(F("error: "));
-  Serial.println(str);
-
-  // red LED indicates error
-  digitalWrite(redLEDpin, HIGH);
-
-  while (1);
-}
-
-void initializeSD() {
-
-  // initialize the SD card
-  Serial.print(F("Initializing SD card..."));
-  // make sure that the default chip select pin is set to
-  // output, even if you don't use it:
-  pinMode(10, OUTPUT);
-
-  // see if the card is present and can be initialized:
-  if (!SD.begin(chipSelect)) {
-    error("Card failed, or not present");
-  }
-  Serial.println(F("card initialized."));
-
-  // create a new file
-  createNewFile();
-
-
-}
 
 
 void connectToRTC() {
@@ -254,60 +207,6 @@ void connectToRTC() {
   }
 }
 
-void newFile() {
-
-  DateTime newDate;
-  newDate = RTC.now();
-
-  String newDateCheck;
-  newDateCheck = String(newDate.hour()) + ':' + String(newDate.minute()) + ':' + String(newDate.second());
-
-
-  if ( newDateCheck == "20:00:0") {
-
-    logfile.close();
-    delay(1000);
-    createNewFile();
-    logData("new file", "time");
-  }
-
-  else if (newDateCheck == "8:00:0") {
-    logfile.close();
-    delay(1000);
-    createNewFile();
-    logData("new file", "time");
-  }
-
-}
-
-void createNewFile() {
-
-  DateTime fileDate;
-  fileDate = RTC.now();
-
-  // for hourly new file timer.
-  lastHour = String(fileDate.month());
-  lastFewMin = (String(fileDate.hour()) + ':' + String(fileDate.minute() + 5));
-
-  char filename[] = "3DMP00.CSV";
-  for (uint8_t i = 0; i < 100; i++) {
-    filename[4] = i / 10 + '0';
-    filename[5] = i % 10 + '0';
-    if (! SD.exists(filename)) {
-      // only open a new file if it doesn't exist
-      logfile = SD.open(filename, FILE_WRITE);
-      break;  // leave the loop!
-    }
-  }
-
-  if (! logfile) {
-    error("couldnt create file");
-  }
-
-  Serial.print(F("Logging to: "));
-  Serial.println(filename);
-
-}
 
 void setupCam() {
 
@@ -386,7 +285,7 @@ void takePic() {
     buffer = cam.readPicture(bytesToRead);
     imgFile.write(buffer, bytesToRead);
     if (++wCount >= 64) { // Every 2K, give a little feedback so it doesn't appear locked up
-      Serial.print(F('.'));
+      Serial.print('.');
       wCount = 0;
     }
     //Serial.print("Read ");  Serial.print(bytesToRead, DEC); Serial.println(" bytes");
