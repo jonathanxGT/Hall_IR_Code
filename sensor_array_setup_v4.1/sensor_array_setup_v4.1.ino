@@ -164,6 +164,13 @@ void debounceAndCheck(int avg) {
 
     //see if reading was greater than debounce delay
     debounceDifference = millis() - arrayLastDebounceTime[arrayIndex];
+    
+    //ignore readings from sensors on bootup in the first second
+    if (millis() < 1000) {
+      debounceDifference = 0;
+    }
+
+    //check for change
     if ( debounceDifference > debounceDelay) {
 
       //determine if it's a pick or place
@@ -331,11 +338,11 @@ void newFile() {
     }
     */
 
-//  if (lastFewMin == (String(newDate.hour()) + ':' + String(newDate.minute()))) {
-//    delay(1000);
-//    logData("current", "time");
-//    lastFewMin = (String(newDate.hour()) + ':' + String(newDate.minute() + 5));
-//  }
+  //  if (lastFewMin == (String(newDate.hour()) + ':' + String(newDate.minute()))) {
+  //    delay(1000);
+  //    logData("current", "time");
+  //    lastFewMin = (String(newDate.hour()) + ':' + String(newDate.minute() + 5));
+  //  }
 
 
 
