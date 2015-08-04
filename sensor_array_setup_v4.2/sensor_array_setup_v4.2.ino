@@ -3,6 +3,8 @@
 #include <SPI.h>
 #include <Wire.h>
 #include "RTClib.h"
+#include <SoftwareSerial.h>
+#include <Adafruit_VC0706.h>
 
 #define LOG_INTERVAL  1000
 #define SYNC_INTERVAL 1000
@@ -45,13 +47,17 @@ int allDataArray[sensorCount][3];
 //---setup debounceTime array
 unsigned long arrayLastDebounceTime [sensorCount];
 
-
 int debounceDelay = 500;
 byte arrayIndex;
+
+//--- Camera setup
+SoftwareSerial cameraconnection = SoftwareSerial(9, 10);
+Adafruit_VC0706 cam = Adafruit_VC0706(&cameraconnection);
 
 File logfile;
 void setup() {
 
+  if (chipSelect != 10) pinMode(10, OUTPUT); // SS on Uno, etc.
   Serial.begin(9600);
 
   //---- Logging setup ----//
@@ -59,18 +65,14 @@ void setup() {
   pinMode(redLEDpin, OUTPUT);
 
   connectToRTC();
-  initializeSD();
-
-  logfile.println("millis,stamp,datetime,product name, status");
-#if ECHO_TO_SERIAL
-  Serial.println(F("millis,stamp,datetime,product name, status"));
-#endif //ECHO_TO_SERIAL
-
+  // initializeSD();
+  setupCam();
 
 
   for (byte h = 0; h < sensorCount; h++) {
     pinMode(sensor[h], INPUT);
-    arrayLastDebounceTime[arrayIndex] = 0;
+    allDataArray[h][2] = 0;
+    arrayLastDebounceTime[h] = 0;
     for (byte i = 0; i < 3; i++) {
       allDataArray[sensorCount] [3] = 0;
     }
@@ -139,6 +141,8 @@ void debounceAndCheck(int avg) {
   int sensorDifference;
   long debounceDifference;
 
+
+
   //check if the reading is coming from a hall (digital) or IR (analog) sensor
 
   if (arrayIndex > 1) {
@@ -164,15 +168,24 @@ void debounceAndCheck(int avg) {
 
     //see if reading was greater than debounce delay
     debounceDifference = millis() - arrayLastDebounceTime[arrayIndex];
+
+    //ignores readings of sensors in the first second.
+    if (millis() < 1000) {
+      debounceDifference = 0;
+    }
+    
     if ( debounceDifference > debounceDelay) {
 
       //determine if it's a pick or place
       if (allDataArray[arrayIndex][2] > 0) {
-        logData(productName[arrayIndex], "pick");
+        Serial.println(productName[arrayIndex]);
+          takePic();
+        //logData(productName[arrayIndex], "pick");
       }
 
       else if (allDataArray[arrayIndex][2] < 0) {
-        logData(productName[arrayIndex], "place");
+
+        // logData(productName[arrayIndex], "place");
       }
       arrayLastDebounceTime[arrayIndex] = millis();
     }
@@ -186,64 +199,9 @@ void logData(char *str, char *stat) {
 
   DateTime now;
 
-  logfile.print(m);           // milliseconds since start
-  logfile.print(", ");
-
-#if ECHO_TO_SERIAL
-  Serial.print(m);         // milliseconds since start
-  Serial.print(F(", "));
-#endif
-
   // fetch the time
   now = RTC.now();
 
-  // log date
-  logfile.print(now.year(), DEC);
-  logfile.print("/");
-  logfile.print(now.month(), DEC);
-  logfile.print("/");
-  logfile.print(now.day(), DEC);
-  logfile.print(", ");
-
-  //log time
-  logfile.print(now.hour(), DEC);
-  logfile.print(":");
-  logfile.print(now.minute(), DEC);
-  logfile.print(":");
-  logfile.print(now.second(), DEC);
-
-  //log activity
-  logfile.print(", ");
-  logfile.print(str);
-  logfile.print(", ");
-  logfile.print(stat);
-  logfile.println();
-
-#if ECHO_TO_SERIAL
-  Serial.print(now.year(), DEC);
-  Serial.print(F("/"));
-  Serial.print(now.month(), DEC);
-  Serial.print(F("/"));
-  Serial.print(now.day(), DEC);
-  Serial.print(F(", "));
-
-  Serial.print(now.hour(), DEC);
-  Serial.print(F(":"));
-  Serial.print(now.minute(), DEC);
-  Serial.print(F(":"));
-  Serial.print(now.second(), DEC);
-
-  Serial.print(F(", "));
-  Serial.print(str);
-  Serial.print(F(", "));
-  Serial.print(stat);
-  Serial.println();
-#endif ECHO_TO_SERIAL
-
-  // Now we write data to disk! Don't sync too often - requires 2048 bytes of I/O to SD card
-  // which uses a bunch of power and takes time
-  if ((millis() - syncTime) < SYNC_INTERVAL) return;
-  syncTime = millis();
 
   // blink LED to show we are syncing data to the card & updating FAT!
   digitalWrite(redLEDpin, HIGH);
@@ -320,37 +278,12 @@ void newFile() {
     logData("new file", "time");
   }
 
-  /*
-    if (lastHour != String(newDate.hour())) {
-      //logfile.close();
-      delay(1000);
-      // createNewFile();
-      logData("current", "time");
-
-      lastHour = String(newDate.hour());
-    }
-    */
-
-//  if (lastFewMin == (String(newDate.hour()) + ':' + String(newDate.minute()))) {
-//    delay(1000);
-//    logData("current", "time");
-//    lastFewMin = (String(newDate.hour()) + ':' + String(newDate.minute() + 5));
-//  }
-
-
-
 }
 
 void createNewFile() {
 
   DateTime fileDate;
   fileDate = RTC.now();
-
-  //  String fileDatename;
-  //  fileDatename = String(fileDate.month()) + '/' + String(fileDate.day()) + '_'
-  //                 + String(fileDate.hour()) + ':' + String(fileDate.minute()) + ':'
-  //                 + String(fileDate.second()) + ".CSV";
-  //  Serial.println(fileDatename);
 
   // for hourly new file timer.
   lastHour = String(fileDate.month());
@@ -367,18 +300,6 @@ void createNewFile() {
     }
   }
 
-  /*
-    char filename[fileDatename.length()];
-    for (uint8_t i = 0; i <= fileDatename.length(); i++) {
-      filename[i] = fileDatename.charAt(i);
-      if (! SD.exists(filename)) {
-        // only open a new file if it doesn't exist
-        logfile = SD.open(filename, FILE_WRITE);
-        break;  // leave the loop!
-      }
-    }
-    */
-
   if (! logfile) {
     error("couldnt create file");
   }
@@ -386,6 +307,96 @@ void createNewFile() {
   Serial.print(F("Logging to: "));
   Serial.println(filename);
 
+}
+
+void setupCam() {
+
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Card failed, or not present");
+    // don't do anything more:
+    return;
+  }
+  // Try to locate the camera
+  if (cam.begin()) {
+    Serial.println(F("Camera Found:"));
+  } else {
+    Serial.println(F("No camera found?"));
+    return;
+  }
+  // Print out the camera version information (optional)
+  char *reply = cam.getVersion();
+  if (reply == 0) {
+    Serial.print(F("Failed to get version"));
+  } else {
+    Serial.println(F("-----------------"));
+    Serial.print(reply);
+    Serial.println(F("-----------------"));
+  }
+
+  // Set the picture size - you can choose one of 640x480, 320x240 or 160x120
+  // Remember that bigger pictures take longer to transmit!
+
+  cam.setImageSize(VC0706_640x480);        // biggest
+  //cam.setImageSize(VC0706_320x240);        // medium
+  //cam.setImageSize(VC0706_160x120);          // small
+
+  // You can read the size back from the camera (optional, but maybe useful?)
+  uint8_t imgsize = cam.getImageSize();
+  Serial.print("Image size: ");
+  if (imgsize == VC0706_640x480) Serial.println("640x480");
+  if (imgsize == VC0706_320x240) Serial.println("320x240");
+  if (imgsize == VC0706_160x120) Serial.println("160x120");
+}
+
+void takePic() {
+  if (! cam.takePicture())
+    Serial.println(F("Failed to snap!"));
+  else
+    Serial.println(F("Picture taken!"));
+
+  // Create an image with the name IMAGExx.JPG
+  char filename[13];
+  strcpy(filename, "IMAGE00.JPG");
+  for (int i = 0; i < 100; i++) {
+    filename[5] = '0' + i / 10;
+    filename[6] = '0' + i % 10;
+    // create if does not exist, do not open existing, write, sync after write
+    if (! SD.exists(filename)) {
+      break;
+    }
+  }
+
+  // Open the file for writing
+  File imgFile = SD.open(filename, FILE_WRITE);
+
+  // Get the size of the image (frame) taken
+  uint16_t jpglen = cam.frameLength();
+  Serial.print(F("Storing "));
+  Serial.print(jpglen, DEC);
+  Serial.print(F(" byte image."));
+
+  int32_t time = millis();
+  pinMode(8, OUTPUT);
+  // Read all the data up to # bytes!
+  byte wCount = 0; // For counting # of writes
+  while (jpglen > 0) {
+    // read 32 bytes at a time;
+    uint8_t *buffer;
+    uint8_t bytesToRead = min(32, jpglen); // change 32 to 64 for a speedup but may not work with all setups!
+    buffer = cam.readPicture(bytesToRead);
+    imgFile.write(buffer, bytesToRead);
+    if (++wCount >= 64) { // Every 2K, give a little feedback so it doesn't appear locked up
+      Serial.print(F('.'));
+      wCount = 0;
+    }
+    //Serial.print("Read ");  Serial.print(bytesToRead, DEC); Serial.println(" bytes");
+    jpglen -= bytesToRead;
+  }
+  imgFile.close();
+
+  time = millis() - time;
+  Serial.println(F("done!"));
+  Serial.print(time); Serial.println(F(" ms elapsed"));
 }
 
 
