@@ -135,7 +135,7 @@ void debounceAndCheck(int avg) {
 
   int threshold;
   int hallThresh = 0;
-  int irThresh = 1;
+  int irThresh = 2;
   int sensorDifference;
   long debounceDifference;
 
@@ -153,7 +153,7 @@ void debounceAndCheck(int avg) {
     threshold = irThresh;
   }
   else if (arrayIndex < 2 && allDataArray[arrayIndex][2] < 0) {
-    threshold = irThresh + 2;
+    threshold = irThresh + 4;
   }
 
 
