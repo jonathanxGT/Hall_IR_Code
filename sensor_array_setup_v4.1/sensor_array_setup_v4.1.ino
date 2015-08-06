@@ -46,7 +46,7 @@ int allDataArray[sensorCount][3];
 unsigned long arrayLastDebounceTime [sensorCount];
 
 
-int debounceDelay = 500;
+int debounceDelay = 650;
 byte arrayIndex;
 
 File logfile;
@@ -135,7 +135,7 @@ void debounceAndCheck(int avg) {
 
   int threshold;
   int hallThresh = 0;
-  int irThresh = 2;
+  int irThresh = 8;
   int sensorDifference;
   long debounceDifference;
 
@@ -153,9 +153,21 @@ void debounceAndCheck(int avg) {
     threshold = irThresh;
   }
   else if (arrayIndex < 2 && allDataArray[arrayIndex][2] < 0) {
-    threshold = irThresh + 4;
+    threshold = irThresh + 5;
   }
-
+  
+ /* 
+if (arrayIndex == 1){
+  Serial.print("Sensor Readings: ");
+  Serial.print(allDataArray[arrayIndex][2]);
+  Serial.print("  ");
+  Serial.print("Sensor Difference: ");
+  Serial.print(abs(sensorDifference));
+  Serial.print(" ");
+  Serial.print("Threshold value: ");
+  Serial.println(threshold);
+}
+*/
 
   if (abs(sensorDifference) > threshold) {
 
